@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>亂碼救星 · TXT 編碼轉換</title>
+<meta name="description" content="把 GBK／Big5 的 TXT 轉成 UTF-8。自動偵測編碼、預覽、批次下載，全部在本機完成，不上傳。">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1216">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23161b21'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23c8a96a'%3E%E5%AD%97%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0f1216; --panel:#161b21; --panel-2:#1c232b; --line:rgba(255,255,255,.09);
+    --txt:#e8ecf2; --dim:#93a0ae; --dim2:#6b7885;
+    --gold:#c8a96a; --ok:#7fc8a9; --warn:#e0a45e; --bad:#d9736f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:
+      radial-gradient(900px 520px at 15% -10%, rgba(200,169,106,.12), transparent 62%),
+      radial-gradient(700px 460px at 92% 108%, rgba(127,200,169,.09), transparent 62%),
+      var(--bg);
+    color:var(--txt); font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    padding:28px 18px 64px;
+  }
+  .wrap{max-width:880px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .logo{width:34px;height:34px;border-radius:10px;border:1px solid rgba(200,169,106,.45);display:grid;place-items:center;color:var(--gold);font-weight:700;font-size:15px;background:rgba(200,169,106,.08)}
+  h1{font-size:20px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 26px;line-height:1.8}
+  .sub b{color:#d8c69b;font-weight:600}
+
+  .drop{
+    display:block;
+    border:1.5px dashed rgba(255,255,255,.16); border-radius:16px; background:rgba(255,255,255,.02);
+    padding:38px 20px; text-align:center; cursor:pointer; transition:.18s; margin-bottom:18px;
+  }
+  .drop:hover,.drop.over{border-color:rgba(200,169,106,.6); background:rgba(200,169,106,.05)}
+  .drop strong{display:block;font-size:15px;margin-bottom:6px}
+  .drop span{color:var(--dim2);font-size:12.5px}
+  input[type=file]{display:none}
+
+  .file{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:15px 16px; margin-bottom:12px;
+  }
+  .fhead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .fname{flex:1;min-width:180px;font-weight:600;font-size:14px;word-break:break-all}
+  .fmeta{color:var(--dim2);font-size:11.5px;margin-top:3px;font-weight:400}
+  .tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .t-ok{background:rgba(127,200,169,.12);color:var(--ok);border-color:rgba(127,200,169,.25)}
+  .t-warn{background:rgba(224,164,94,.12);color:var(--warn);border-color:rgba(224,164,94,.25)}
+  .t-dim{background:rgba(255,255,255,.05);color:var(--dim)}
+  .row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+  select,button{font:inherit;font-size:13px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--txt);padding:8px 11px;cursor:pointer}
+  select:focus,button:focus-visible{outline:2px solid rgba(200,169,106,.5);outline-offset:1px}
+  button.primary{background:linear-gradient(180deg,#d2b57c,#b7964f);border-color:#a9884a;color:#1c1710;font-weight:600}
+  button.ghost{background:transparent}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .preview{
+    margin-top:12px;background:#0c0f13;border:1px solid rgba(255,255,255,.06);border-radius:10px;
+    padding:12px 13px;font-size:12.5px;color:#b8c2cd;line-height:1.85;max-height:132px;overflow:auto;
+    white-space:pre-wrap;word-break:break-word;font-family:"Noto Sans TC",ui-monospace,monospace;
+  }
+  .preview.bad{color:#e0a09d}
+  .bar{position:sticky;bottom:0;margin-top:26px;padding:14px 0 0;background:linear-gradient(180deg,transparent,var(--bg) 40%)}
+  .bar .inner{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .bar .count{flex:1;color:var(--dim);font-size:13px;min-width:140px}
+  footer{margin-top:34px;color:var(--dim2);font-size:11.5px;line-height:1.9;text-align:center}
+  .hint{font-size:12px;color:var(--dim2);margin-top:10px}
+  @media (max-width:520px){ .drop{padding:30px 14px} h1{font-size:18px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">字</div>
+    <h1>亂碼救星</h1>
+  </header>
+  <p class="sub">
+    把 <b>GBK／Big5</b> 編碼的 TXT 轉成 <b>UTF-8</b>，自動偵測、先預覽再轉。
+    全部在你的瀏覽器裡完成，<b>檔案不會上傳</b>。
+  </p>
+
+  <label class="drop" id="drop">
+    <strong>拖入 TXT 檔，或點這裡選檔</strong>
+    <span>支援多選 · 單檔建議 50 MB 以內 · 只處理 .txt</span>
+    <input type="file" id="file" accept=".txt,text/plain" multiple>
+  </label>
+
+  <div id="list"></div>
+
+  <div class="bar" id="bar" hidden>
+    <div class="inner">
+      <span class="count" id="count">—</span>
+      <button class="ghost" id="clear">清空</button>
+      <button class="primary" id="all">全部轉換並下載</button>
+    </div>
+  </div>
+
+  <footer>
+    純前端工具，零依賴、零追蹤。編碼偵測使用瀏覽器內建 TextDecoder。<br>
+    轉出的檔案為 UTF-8（無 BOM），可直接匯入多數閱讀器。
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ENC = [
+    { id:"utf-8",    label:"UTF-8" },
+    { id:"gbk",      label:"GBK（簡體）" },
+    { id:"big5",     label:"Big5（繁體）" },
+    { id:"utf-16le", label:"UTF-16 LE" }
+  ];
+  var files = [];   // { name, buffer, enc, stats, auto }
+
+  var $ = function(s){ return document.querySelector(s); };
+  var listEl = $("#list"), barEl = $("#bar"), countEl = $("#count"), dropEl = $("#drop"), inputEl = $("#file");
+
+  function fmtSize(n){
+    if(n < 1024) return n + " B";
+    if(n < 1048576) return (n/1024).toFixed(1) + " KB";
+    return (n/1048576).toFixed(1) + " MB";
+  }
+
+  function decode(buf, enc){
+    try { return new TextDecoder(enc, { fatal:true }).decode(buf); }
+    catch(e){ return null; }
+  }
+
+  /* 偵測：BOM → UTF-8 嚴格解碼 → 候選編碼比對「亂碼率」 */
+  function detect(buf){
+    var u8 = new Uint8Array(buf);
+    if(u8.length > 2 && u8[0]===0xEF && u8[1]===0xBB && u8[2]===0xBF) return { enc:"utf-8", why:"BOM" };
+    if(u8.length > 1 && u8[0]===0xFF && u8[1]===0xFE) return { enc:"utf-16le", why:"BOM" };
+
+    if(decode(buf, "utf-8")) return { enc:"utf-8", why:"合法 UTF-8" };
+
+    var best = null;
+    ["gbk","big5"].forEach(function(enc){
+      var txt = decode(buf, enc);
+      if(!txt) return;
+      var bad = (txt.match(/\uFFFD/g) || []).length;
+      var cjk = (txt.match(/[\u4E00-\u9FFF]/g) || []).length;
+      var score = bad * 12 - cjk;         // 亂碼愈少、漢字愈多愈好
+      if(!best || score < best.score) best = { enc:enc, score:score, bad:bad };
+    });
+    if(best) return { enc:best.enc, why: best.bad === 0 ? "無替換字元" : "推測（有少量異常字元）" };
+    return { enc:"utf-8", why:"無法判定，預設 UTF-8" };
+  }
+
+  function stats(text){
+    var chapters = (text.match(/^[ \t\u3000]*第[0-9０-９零〇一二三四五六七八九十百千万萬两兩]{1,10}[章回節节卷篇集話话部]/gm) || []).length;
+    return { words: text.replace(/\s/g,"").length, chapters: chapters };
+  }
+
+  function addFiles(fileList){
+    Array.prototype.forEach.call(fileList, function(f){
+      if(!/\.txt$/i.test(f.name) && f.type !== "text/plain") return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var buf = reader.result;
+        var d = detect(buf);
+        var text = decode(buf, d.enc) || "";
+        files.push({ name:f.name, buffer:buf, enc:d.enc, why:d.why, auto:d.enc, text:text, st:stats(text) });
+        render();
+      };
+      reader.readAsArrayBuffer(f);
+    });
+  }
+
+  function render(){
+    listEl.innerHTML = "";
+    if(!files.length){ barEl.hidden = true; return; }
+    barEl.hidden = false;
+    countEl.textContent = files.length + " 個檔案待轉換";
+
+    files.forEach(function(item, i){
+      var el = document.createElement("div");
+      el.className = "file";
+
+      var sample = item.text.slice(0, 260).replace(/\uFFFD/g,"�");
+      var looksBad = (item.text.match(/\uFFFD/g) || []).length > 0;
+
+      var head = document.createElement("div");
+      head.className = "fhead";
+      head.innerHTML =
+        '<div class="fname">' + escapeHtml(item.name) +
+          '<div class="fmeta">' + fmtSize(item.buffer.byteLength) + ' · ' +
+            item.st.words.toLocaleString() + ' 字 · ' + item.st.chapters + ' 章</div></div>' +
+        '<span class="tag ' + (looksBad ? 't-warn' : 't-ok') + '">' +
+          (looksBad ? '可能有亂碼' : item.enc.toUpperCase()) + '</span>';
+
+      var row = document.createElement("div");
+      row.className = "row";
+      var sel = document.createElement("select");
+      ENC.forEach(function(e){
+        var o = document.createElement("option");
+        o.value = e.id; o.textContent = e.label;
+        if(e.id === item.enc) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function(){
+        item.enc = sel.value;
+        item.text = decode(item.buffer, item.enc) || "";
+        item.st = stats(item.text);
+        render();
+      });
+
+      var dl = document.createElement("button");
+      dl.className = "primary";
+      dl.textContent = "轉存 UTF-8";
+      dl.addEventListener("click", function(){ save(item); });
+
+      var del = document.createElement("button");
+      del.className = "ghost";
+      del.textContent = "移除";
+      del.addEventListener("click", function(){ files.splice(i,1); render(); });
+
+      var hint = document.createElement("span");
+      hint.className = "hint";
+      hint.textContent = "自動判定：" + item.auto.toUpperCase() + "（" + item.why + "）";
+
+      row.appendChild(sel); row.appendChild(dl); row.appendChild(del); row.appendChild(hint);
+
+      var pre = document.createElement("div");
+      pre.className = "preview" + (looksBad ? " bad" : "");
+      pre.textContent = sample || "（空白檔）";
+
+      el.appendChild(head); el.appendChild(row); el.appendChild(pre);
+      listEl.appendChild(el);
+    });
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+
+  function save(item){
+    var text = decode(item.buffer, item.enc);
+    if(text === null){ alert("這個編碼無法解碼此檔案，換一個試試。"); return; }
+    var out = item.name.replace(/\.txt$/i, "") + "_utf8.txt";
+    var blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = out;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  function saveAll(){
+    files.forEach(function(item, i){
+      setTimeout(function(){ save(item); }, i * 260);   // 避免瀏覽器擋連續下載
+    });
+  }
+
+  /* 事件 */
+  dropEl.addEventListener("click", function(){ inputEl.click(); });
+  inputEl.addEventListener("change", function(e){ addFiles(e.target.files); inputEl.value = ""; });
+  ["dragenter","dragover"].forEach(function(ev){
+    dropEl.addEventListener(ev, function(e){ e.preventDefault(); dropEl.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dropEl.addEventListener(ev, function(e){ e.preventDefault(); dropEl.classList.remove("over"); });
+  });
+  dropEl.addEventListener("drop", function(e){
+    if(e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+  $("#all").addEventListener("click", saveAll);
+  $("#clear").addEventListener("click", function(){ files = []; render(); });
+
+  /* PWA */
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>

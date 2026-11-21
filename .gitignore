@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器
+.vscode/
+.idea/
+*.swp
+
+# 依賴與日誌（本專案其實不需要，留著避免誤入）
+node_modules/
+*.log
