@@ -96,4 +96,4 @@ GitHub Pages：`Settings → Pages → Deploy from a branch → main / (root)`�
 
 ---
 
-同系列：[專注鐘 · 番茄計時](https://github.com/Dahyun001/pomodoro) · [Soul Reader 本地閱讀器](https://github.com/Dahyun001/soul-reader)
+同系列：[專注鐘 · 番茄計時](https://github.com/Dahyun001/pomodoro) · [Soul Reader 本地 TXT 閱讀器](https://soul.wanderingsoul.duckdns.org)
