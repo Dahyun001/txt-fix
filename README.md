@@ -10,7 +10,7 @@
 </p>
 
 <p>
-  <a href="https://soul.wanderingsoul.duckdns.org/apps/txt-fix/"><b>▶ 線上直接用</b></a>
+  <a href="https://dahyun001.github.io/txt-fix/"><b>▶ 線上直接用</b></a>
   &nbsp;·&nbsp;
   <a href="#本機執行">本機執行</a>
 </p>
